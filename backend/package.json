@@ -1,0 +1,34 @@
+{
+  "name": "mednexus-ai-backend",
+  "version": "1.0.0",
+  "description": "MedNexus AI healthcare intelligence platform backend",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+  },
+  "keywords": [
+    "healthcare",
+    "ai",
+    "mednexus",
+    "health-tech",
+    "api"
+  ],
+  "author": "MedNexus AI Team",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "groq-sdk": "^1.5.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.0",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

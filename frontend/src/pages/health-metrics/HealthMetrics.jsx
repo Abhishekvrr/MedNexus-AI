@@ -16,7 +16,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-const API_BASE_URL = "http://localhost:5000";
+import API_BASE_URL from "../../config/api";
 
 function HealthMetrics() {
   const [metrics, setMetrics] = useState([]);

@@ -14,7 +14,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-const API_BASE_URL = "http://localhost:5000";
+import API_BASE_URL from "../../config/api";
 
 function Notifications() {
   const [notifications, setNotifications] = useState([]);

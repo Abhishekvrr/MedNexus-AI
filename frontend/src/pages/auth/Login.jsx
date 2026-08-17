@@ -14,6 +14,8 @@ import {
   useState,
 } from "react";
 
+import API_BASE_URL from "../../config/api";
+
 
 function Login() {
 
@@ -50,8 +52,12 @@ function Login() {
       localStorage.removeItem("user");
 
 
+      // =====================================================
+      // LOGIN API
+      // =====================================================
+
       const response = await fetch(
-        "http://localhost:5000/api/auth/login",
+        `${API_BASE_URL}/api/auth/login`,
         {
           method: "POST",
 
@@ -191,6 +197,7 @@ function Login() {
         err
       );
 
+
       /*
         Make absolutely sure a failed login
         does not leave an invalid token behind.
@@ -198,6 +205,7 @@ function Login() {
 
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+
 
       setError(
         err.message ||

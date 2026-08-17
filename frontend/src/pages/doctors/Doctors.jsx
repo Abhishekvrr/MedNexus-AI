@@ -11,7 +11,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-const API_BASE_URL = "http://localhost:5000";
+import API_BASE_URL from "../../config/api";
 
 function Doctors() {
   const [doctors, setDoctors] = useState([]);
@@ -937,4 +937,4 @@ function DoctorCard({ doctor }) {
   );
 }
 
-export default Doctors;
+export default Doctors; 

@@ -1,6 +1,7 @@
+import "dotenv/config";
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 
 import pool from "./config/database.js";
 
@@ -28,12 +29,13 @@ import recommendationRoutes from "./routes/recommendationRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import aiRecommendationRoutes from "./routes/aiRecommendationRoutes.js";
 
-dotenv.config();
+// ============================================================
+// APP CONFIGURATION
+// ============================================================
 
 const app = express();
 
 const PORT = process.env.PORT || 5000;
-
 
 // ============================================================
 // MIDDLEWARE
@@ -41,18 +43,13 @@ const PORT = process.env.PORT || 5000;
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "http://127.0.0.1:5173",
-    ],
+    origin: true,
     credentials: true,
   })
 );
 
 app.use(express.json());
-
 app.use(express.urlencoded({ extended: true }));
-
 
 // ============================================================
 // HEALTH CHECK
@@ -72,7 +69,6 @@ app.get("/api/health", async (req, res) => {
       },
       timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error("Health check error:", error);
 
@@ -83,10 +79,13 @@ app.get("/api/health", async (req, res) => {
       database: {
         connected: false,
       },
+      error:
+        process.env.NODE_ENV === "production"
+          ? undefined
+          : error.message,
     });
   }
 });
-
 
 // ============================================================
 // API ROUTES
@@ -98,13 +97,11 @@ app.use("/api/appointments", appointmentRoutes);
 
 app.use("/api/patients", patientRoutes);
 
-
 // ============================================================
-// IMPORTANT: DOCTOR ROUTES
+// DOCTOR ROUTES
 // ============================================================
 
 app.use("/api/doctor", doctorRoutes);
-
 
 // ============================================================
 // OTHER ROUTES
@@ -132,11 +129,7 @@ app.use("/api/recommendations", recommendationRoutes);
 
 app.use("/api/ai", aiRoutes);
 
-app.use(
-  "/api/ai-recommendations",
-  aiRecommendationRoutes
-);
-
+app.use("/api/ai-recommendations", aiRecommendationRoutes);
 
 // ============================================================
 // 404 API HANDLER
@@ -148,7 +141,6 @@ app.use("/api", (req, res) => {
     message: `Route ${req.method} ${req.originalUrl} not found`,
   });
 });
-
 
 // ============================================================
 // GLOBAL ERROR HANDLER
@@ -163,37 +155,42 @@ app.use((error, req, res, next) => {
   });
 });
 
+// ============================================================
+// VERCEL EXPORT
+// ============================================================
+
+// Export Express app for Vercel
+export default app;
 
 // ============================================================
-// START SERVER
+// LOCAL DEVELOPMENT SERVER
 // ============================================================
 
-const startServer = async () => {
-  try {
-    await pool.query("SELECT 1");
+// Only start app.listen() when running locally.
+// Vercel will handle the server in production.
+if (process.env.NODE_ENV !== "production") {
+  const startServer = async () => {
+    try {
+      await pool.query("SELECT 1");
 
-    console.log("✅ PostgreSQL connected");
-    console.log("✅ Database: mednexus");
+      console.log("PostgreSQL connected");
+      console.log("Database: mednexus");
 
-    app.listen(PORT, () => {
-      console.log("");
-      console.log("==============================================");
-      console.log("       MEDNEXUS AI BACKEND");
-      console.log("==============================================");
-      console.log(`🚀 Server: http://localhost:${PORT}`);
-      console.log(`❤️ Health: http://localhost:${PORT}/api/health`);
-      console.log(
-        `👨‍⚕️ Doctor Patients: http://localhost:${PORT}/api/doctor/patients`
-      );
-      console.log("==============================================");
-      console.log("");
-    });
+      app.listen(PORT, () => {
+        console.log("");
+        console.log("==============================================");
+        console.log("       MEDNEXUS AI BACKEND");
+        console.log("==============================================");
+        console.log(`Server: http://localhost:${PORT}`);
+        console.log(`Health: http://localhost:${PORT}/api/health`);
+        console.log("==============================================");
+        console.log("");
+      });
+    } catch (error) {
+      console.error("Database connection failed:", error);
+      process.exit(1);
+    }
+  };
 
-  } catch (error) {
-    console.error("❌ Database connection failed:");
-    console.error(error);
-    process.exit(1);
-  }
-};
-
-startServer();
+  startServer();
+}

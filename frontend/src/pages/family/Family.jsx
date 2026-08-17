@@ -10,7 +10,7 @@ import {
   Plus,
 } from "lucide-react";
 
-const API_BASE_URL = "http://localhost:5000";
+import API_BASE_URL from "../../config/api";
 
 function Family() {
   const [familyMembers, setFamilyMembers] = useState([]);

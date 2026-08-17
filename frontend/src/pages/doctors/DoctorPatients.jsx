@@ -13,7 +13,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+import API_BASE_URL from "../../config/api";
 
 function DoctorPatients() {
   const [patients, setPatients] = useState([]);
@@ -33,7 +33,7 @@ function DoctorPatients() {
         throw new Error("Authentication token missing.");
       }
 
-      const response = await fetch(`${API_URL}/doctor/patients`, {
+      const response = await fetch(`${API_BASE_URL}/api/doctor/patients`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -136,9 +136,7 @@ function DoctorPatients() {
 
   return (
     <div className="doctor-page">
-      {/* =========================================
-          PAGE HEADER
-      ========================================= */}
+      {/* PAGE HEADER */}
       <div className="doctor-page-header">
         <div className="doctor-header-content">
           <div className="doctor-eyebrow">
@@ -163,13 +161,14 @@ function DoctorPatients() {
             size={17}
             className={loading ? "spin" : ""}
           />
-          <span>{loading ? "Refreshing..." : "Refresh"}</span>
+
+          <span>
+            {loading ? "Refreshing..." : "Refresh"}
+          </span>
         </button>
       </div>
 
-      {/* =========================================
-          STATISTICS
-      ========================================= */}
+      {/* STATISTICS */}
       <div className="doctor-stat-grid">
         <div className="doctor-stat-card">
           <div className="doctor-stat-icon blue">
@@ -208,9 +207,7 @@ function DoctorPatients() {
         </div>
       </div>
 
-      {/* =========================================
-          PATIENT DIRECTORY
-      ========================================= */}
+      {/* PATIENT DIRECTORY */}
       <div className="doctor-content-card">
         <div className="doctor-card-header">
           <div>
@@ -247,9 +244,7 @@ function DoctorPatients() {
           </div>
         </div>
 
-        {/* =========================================
-            ERROR
-        ========================================= */}
+        {/* ERROR */}
         {error && (
           <div className="doctor-error">
             <div className="doctor-error-icon">
@@ -267,9 +262,7 @@ function DoctorPatients() {
           </div>
         )}
 
-        {/* =========================================
-            LOADING
-        ========================================= */}
+        {/* LOADING */}
         {loading ? (
           <div className="doctor-loading-state">
             <div className="doctor-loading-icon">
@@ -287,9 +280,7 @@ function DoctorPatients() {
             </p>
           </div>
         ) : filteredPatients.length === 0 ? (
-          /* =========================================
-             EMPTY STATE
-          ========================================= */
+          /* EMPTY STATE */
           <div className="doctor-empty-state">
             <div className="doctor-empty-icon">
               <Users size={36} />
@@ -317,9 +308,7 @@ function DoctorPatients() {
             )}
           </div>
         ) : (
-          /* =========================================
-             PATIENT CARDS
-          ========================================= */
+          /* PATIENT CARDS */
           <div className="doctor-patient-grid">
             {filteredPatients.map((patient) => {
               const initials = getInitials(
@@ -355,7 +344,10 @@ function DoctorPatients() {
                       </span>
                     </div>
 
-                    <button className="doctor-card-arrow">
+                    <button
+                      className="doctor-card-arrow"
+                      type="button"
+                    >
                       <ChevronRight size={17} />
                     </button>
                   </div>
@@ -370,6 +362,7 @@ function DoctorPatients() {
 
                         <div>
                           <span>Email</span>
+
                           <strong>
                             {patient.email}
                           </strong>
@@ -385,6 +378,7 @@ function DoctorPatients() {
 
                         <div>
                           <span>Phone</span>
+
                           <strong>
                             {patient.phone}
                           </strong>
@@ -398,8 +392,10 @@ function DoctorPatients() {
                     {patient.gender && (
                       <div className="doctor-medical-item">
                         <UserRound size={15} />
+
                         <div>
                           <span>Gender</span>
+
                           <strong>
                             {patient.gender}
                           </strong>
@@ -410,8 +406,10 @@ function DoctorPatients() {
                     {age !== null && (
                       <div className="doctor-medical-item">
                         <Calendar size={15} />
+
                         <div>
                           <span>Age</span>
+
                           <strong>
                             {age} years
                           </strong>
@@ -422,8 +420,10 @@ function DoctorPatients() {
                     {patient.blood_group && (
                       <div className="doctor-medical-item blood">
                         <Droplets size={15} />
+
                         <div>
                           <span>Blood Group</span>
+
                           <strong>
                             {patient.blood_group}
                           </strong>
@@ -434,8 +434,10 @@ function DoctorPatients() {
                     {patient.weight_kg && (
                       <div className="doctor-medical-item">
                         <Activity size={15} />
+
                         <div>
                           <span>Weight</span>
+
                           <strong>
                             {patient.weight_kg} kg
                           </strong>
@@ -448,6 +450,7 @@ function DoctorPatients() {
                   <div className="doctor-patient-footer">
                     <div>
                       <span>Last Appointment</span>
+
                       <strong>
                         {formatDate(
                           patient.last_appointment
@@ -457,6 +460,7 @@ function DoctorPatients() {
 
                     <div>
                       <span>Appointments</span>
+
                       <strong>
                         {patient.appointment_count || 0}
                       </strong>

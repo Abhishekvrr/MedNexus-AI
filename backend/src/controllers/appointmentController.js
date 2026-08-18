@@ -670,3 +670,118 @@ export const cancelAppointment = async (req, res) => {
     });
   }
 };
+
+
+// ============================================================
+// UPDATE APPOINTMENT STATUS (Confirm / Complete / Cancel / Schedule)
+// PUT /api/appointments/:id/status
+// PUT /api/appointments/:id/:action
+// ============================================================
+export const updateAppointmentStatus = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const role = String(req.user.role || "").trim().toLowerCase();
+    const appointmentId = req.params.id;
+    const action = req.params.action || req.body.status || "";
+
+    let targetStatus = "scheduled";
+    const normalizedAction = String(action).trim().toLowerCase();
+
+    if (normalizedAction === "confirm" || normalizedAction === "confirmed" || normalizedAction === "approve") {
+      targetStatus = "confirmed";
+    } else if (normalizedAction === "complete" || normalizedAction === "completed") {
+      targetStatus = "completed";
+    } else if (normalizedAction === "cancel" || normalizedAction === "cancelled") {
+      targetStatus = "cancelled";
+    } else if (normalizedAction === "schedule" || normalizedAction === "scheduled" || normalizedAction === "reschedule" || normalizedAction === "restore") {
+      targetStatus = "scheduled";
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid action '${action}'. Must be confirm, complete, cancel, or schedule.`
+      });
+    }
+
+    // Doctor update
+    if (role === "doctor") {
+      const result = await query(
+        `
+        UPDATE appointments a
+        SET
+          status = $1,
+          updated_at = CURRENT_TIMESTAMP
+        FROM doctors d
+        WHERE a.doctor_id = d.id
+          AND d.user_id = $2
+          AND a.id = $3
+        RETURNING
+          a.id,
+          a.patient_id,
+          a.doctor_id,
+          a.appointment_date,
+          a.appointment_time,
+          a.appointment_type,
+          a.status,
+          a.updated_at
+        `,
+        [targetStatus, userId, appointmentId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Appointment not found or not assigned to this doctor",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: `Appointment status updated to ${targetStatus}`,
+        appointment: result.rows[0],
+      });
+    }
+
+    // Patient update
+    const result = await query(
+      `
+      UPDATE appointments a
+      SET
+        status = $1,
+        updated_at = CURRENT_TIMESTAMP
+      FROM patients p
+      WHERE a.patient_id = p.id
+        AND p.user_id = $2
+        AND a.id = $3
+      RETURNING
+        a.id,
+        a.appointment_date,
+        a.appointment_time,
+        a.status,
+        a.updated_at
+      `,
+      [targetStatus, userId, appointmentId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Appointment status updated to ${targetStatus}`,
+      appointment: result.rows[0],
+    });
+
+  } catch (error) {
+    console.error("Update appointment status error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update appointment status",
+      error: error.message,
+    });
+  }
+};

@@ -135,6 +135,31 @@ export const registerUser = async (req, res) => {
 
     /*
     -------------------------------------------------------
+    AUTO-INITIALIZE PROFILE BY ROLE
+    -------------------------------------------------------
+    */
+    if (role === "doctor") {
+      await query(
+        `
+        INSERT INTO doctors (user_id, specialization, consultation_fee, available_for_online)
+        VALUES ($1, 'General Medicine', 500, TRUE)
+        ON CONFLICT (user_id) DO NOTHING
+        `,
+        [user.id]
+      );
+    } else if (role === "patient") {
+      await query(
+        `
+        INSERT INTO patients (user_id)
+        VALUES ($1)
+        ON CONFLICT (user_id) DO NOTHING
+        `,
+        [user.id]
+      );
+    }
+
+    /*
+    -------------------------------------------------------
     CREATE JWT
     -------------------------------------------------------
     */
@@ -157,6 +182,7 @@ export const registerUser = async (req, res) => {
 
       token,
     });
+
   } catch (error) {
     console.error(
       "Register user error:",

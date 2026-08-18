@@ -2,8 +2,10 @@ import express from "express";
 
 import {
   getMyPrescriptions,
+  getDoctorPrescriptions,
   getPatientPrescriptions,
   createPrescription,
+  createBatchPrescriptions,
   updatePrescription,
   deletePrescription,
 } from "../controllers/prescriptionController.js";
@@ -25,12 +27,18 @@ router.get(
   getMyPrescriptions
 );
 
-
 /*
 ====================================================
 DOCTOR
 ====================================================
 */
+
+// Doctor sees all their issued prescriptions
+router.get(
+  "/doctor",
+  authenticate,
+  getDoctorPrescriptions
+);
 
 // Doctor sees prescriptions for a specific patient
 // IMPORTANT: keep this BEFORE /:id
@@ -40,7 +48,14 @@ router.get(
   getPatientPrescriptions
 );
 
-// Doctor creates prescription
+// Doctor creates batch prescriptions
+router.post(
+  "/batch",
+  authenticate,
+  createBatchPrescriptions
+);
+
+// Doctor creates single prescription
 router.post(
   "/",
   authenticate,
@@ -61,4 +76,4 @@ router.delete(
   deletePrescription
 );
 
-export default router;
+export default router;

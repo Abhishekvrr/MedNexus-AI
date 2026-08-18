@@ -138,6 +138,81 @@ router.get("/patients", authenticate, async (req, res) => {
 
 /**
  * ============================================================
+ * GET DOCTOR PATIENT STATISTICS
+ * ============================================================
+ *
+ * GET /api/doctor/patients/stats
+ *
+ * Returns basic statistics for the doctor's dashboard.
+ */
+router.get("/patients/stats", authenticate, async (req, res) => {
+    try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({
+                success: false,
+                message: "Authentication required"
+            });
+        }
+
+        const doctorUserId = req.user.id;
+
+        const query = `
+            SELECT
+                COUNT(DISTINCT a.patient_id)::integer AS total_patients,
+
+                COUNT(a.id)::integer AS total_appointments,
+
+                COUNT(
+                    CASE
+                        WHEN a.status = 'scheduled'
+                        THEN 1
+                    END
+                )::integer AS scheduled_appointments,
+
+                COUNT(
+                    CASE
+                        WHEN a.status = 'completed'
+                        THEN 1
+                    END
+                )::integer AS completed_appointments,
+
+                COUNT(
+                    CASE
+                        WHEN a.status = 'cancelled'
+                        THEN 1
+                    END
+                )::integer AS cancelled_appointments
+
+            FROM appointments a
+
+            INNER JOIN doctors d
+                ON d.id = a.doctor_id
+
+            WHERE d.user_id = $1;
+        `;
+
+        const result = await pool.query(query, [doctorUserId]);
+
+        return res.status(200).json({
+            success: true,
+            stats: result.rows[0]
+        });
+
+    } catch (error) {
+        console.error("❌ DOCTOR PATIENT STATS ERROR");
+        console.error(error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Unable to load doctor statistics",
+            error: error.message
+        });
+    }
+});
+
+
+/**
+ * ============================================================
  * GET SINGLE PATIENT
  * ============================================================
  *
@@ -264,81 +339,6 @@ router.get("/patients/:patientId", authenticate, async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Unable to load patient",
-            error: error.message
-        });
-    }
-});
-
-
-/**
- * ============================================================
- * GET DOCTOR PATIENT STATISTICS
- * ============================================================
- *
- * GET /api/doctor/patients/stats
- *
- * Returns basic statistics for the doctor's dashboard.
- */
-router.get("/patients/stats", authenticate, async (req, res) => {
-    try {
-        if (!req.user || !req.user.id) {
-            return res.status(401).json({
-                success: false,
-                message: "Authentication required"
-            });
-        }
-
-        const doctorUserId = req.user.id;
-
-        const query = `
-            SELECT
-                COUNT(DISTINCT a.patient_id)::integer AS total_patients,
-
-                COUNT(a.id)::integer AS total_appointments,
-
-                COUNT(
-                    CASE
-                        WHEN a.status = 'scheduled'
-                        THEN 1
-                    END
-                )::integer AS scheduled_appointments,
-
-                COUNT(
-                    CASE
-                        WHEN a.status = 'completed'
-                        THEN 1
-                    END
-                )::integer AS completed_appointments,
-
-                COUNT(
-                    CASE
-                        WHEN a.status = 'cancelled'
-                        THEN 1
-                    END
-                )::integer AS cancelled_appointments
-
-            FROM appointments a
-
-            INNER JOIN doctors d
-                ON d.id = a.doctor_id
-
-            WHERE d.user_id = $1;
-        `;
-
-        const result = await pool.query(query, [doctorUserId]);
-
-        return res.status(200).json({
-            success: true,
-            stats: result.rows[0]
-        });
-
-    } catch (error) {
-        console.error("❌ DOCTOR PATIENT STATS ERROR");
-        console.error(error);
-
-        return res.status(500).json({
-            success: false,
-            message: "Unable to load doctor statistics",
             error: error.message
         });
     }

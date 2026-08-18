@@ -340,3 +340,184 @@ export const deleteMedicalRecord = async (req, res) => {
     });
   }
 };
+
+/*
+===========================================================
+GET PATIENT RECORDS FOR DOCTOR
+GET /api/medical-records/patient/:patientId
+===========================================================
+*/
+export const getPatientRecordsForDoctor = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { patientId } = req.params;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    const doctorResult = await query(
+      `SELECT id FROM doctors WHERE user_id = $1`,
+      [userId]
+    );
+
+    if (doctorResult.rows.length === 0) {
+      return res.status(403).json({
+        success: false,
+        message: "Doctor profile not found",
+      });
+    }
+
+    const recordsResult = await query(
+      `
+      SELECT
+        mr.id,
+        mr.patient_id,
+        mr.doctor_id,
+        mr.appointment_id,
+        mr.diagnosis,
+        mr.symptoms,
+        mr.treatment,
+        mr.medical_notes,
+        mr.record_date,
+        mr.created_at,
+        u.full_name AS doctor_name,
+        d.specialization AS doctor_specialization
+      FROM medical_records mr
+      LEFT JOIN doctors d ON mr.doctor_id = d.id
+      LEFT JOIN users u ON d.user_id = u.id
+      WHERE mr.patient_id = $1
+      ORDER BY mr.record_date DESC, mr.created_at DESC
+      `,
+      [patientId]
+    );
+
+    // Also fetch associated prescriptions
+    const prescriptionsResult = await query(
+      `
+      SELECT
+        pr.*,
+        u.full_name AS doctor_name
+      FROM prescriptions pr
+      LEFT JOIN doctors d ON pr.doctor_id = d.id
+      LEFT JOIN users u ON d.user_id = u.id
+      WHERE pr.patient_id = $1
+      ORDER BY pr.created_at DESC
+      `,
+      [patientId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      count: recordsResult.rows.length,
+      medical_records: recordsResult.rows,
+      prescriptions: prescriptionsResult.rows,
+    });
+  } catch (error) {
+    console.error("Get patient records for doctor error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch patient records",
+      error: error.message,
+    });
+  }
+};
+
+/*
+===========================================================
+CREATE DOCTOR MEDICAL RECORD (ENCOUNTER)
+POST /api/medical-records/doctor
+===========================================================
+*/
+export const createDoctorMedicalRecord = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required",
+      });
+    }
+
+    const doctorResult = await query(
+      `SELECT id FROM doctors WHERE user_id = $1`,
+      [userId]
+    );
+
+    if (doctorResult.rows.length === 0) {
+      return res.status(403).json({
+        success: false,
+        message: "Doctor profile not found",
+      });
+    }
+
+    const doctorId = doctorResult.rows[0].id;
+    const {
+      patient_id,
+      appointment_id,
+      diagnosis,
+      symptoms,
+      treatment,
+      medical_notes,
+      record_date,
+    } = req.body;
+
+    if (!patient_id) {
+      return res.status(400).json({
+        success: false,
+        message: "patient_id is required",
+      });
+    }
+
+    const result = await query(
+      `
+      INSERT INTO medical_records (
+        patient_id,
+        doctor_id,
+        appointment_id,
+        diagnosis,
+        symptoms,
+        treatment,
+        medical_notes,
+        record_date
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, CURRENT_DATE))
+      RETURNING *
+      `,
+      [
+        patient_id,
+        doctorId,
+        appointment_id || null,
+        diagnosis || null,
+        symptoms || null,
+        treatment || null,
+        medical_notes || null,
+        record_date || null,
+      ]
+    );
+
+    // If appointment_id provided, mark appointment as completed
+    if (appointment_id) {
+      await query(
+        `UPDATE appointments SET status = 'completed', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+        [appointment_id]
+      );
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Patient medical record created successfully",
+      medical_record: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Create doctor medical record error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create patient medical record",
+      error: error.message,
+    });
+  }
+};

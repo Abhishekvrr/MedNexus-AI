@@ -109,21 +109,48 @@ router.put("/profile", authenticate, async (req, res) => {
 
     const result = await query(
       `
-      UPDATE patients
+      INSERT INTO patients (
+        user_id,
+        date_of_birth,
+        gender,
+        blood_group,
+        height_cm,
+        weight_kg,
+        emergency_contact_name,
+        emergency_contact_phone,
+        emergency_contact_relation,
+        allergies,
+        chronic_conditions,
+        current_medications
+      )
+      VALUES (
+        $12,
+        $1,
+        $2,
+        $3,
+        $4,
+        $5,
+        $6,
+        $7,
+        $8,
+        $9,
+        $10,
+        $11
+      )
+      ON CONFLICT (user_id) DO UPDATE
       SET
-        date_of_birth = COALESCE($1, date_of_birth),
-        gender = COALESCE($2, gender),
-        blood_group = COALESCE($3, blood_group),
-        height_cm = COALESCE($4, height_cm),
-        weight_kg = COALESCE($5, weight_kg),
-        emergency_contact_name = COALESCE($6, emergency_contact_name),
-        emergency_contact_phone = COALESCE($7, emergency_contact_phone),
-        emergency_contact_relation = COALESCE($8, emergency_contact_relation),
-        allergies = COALESCE($9, allergies),
-        chronic_conditions = COALESCE($10, chronic_conditions),
-        current_medications = COALESCE($11, current_medications),
+        date_of_birth = COALESCE(EXCLUDED.date_of_birth, patients.date_of_birth),
+        gender = COALESCE(EXCLUDED.gender, patients.gender),
+        blood_group = COALESCE(EXCLUDED.blood_group, patients.blood_group),
+        height_cm = COALESCE(EXCLUDED.height_cm, patients.height_cm),
+        weight_kg = COALESCE(EXCLUDED.weight_kg, patients.weight_kg),
+        emergency_contact_name = COALESCE(EXCLUDED.emergency_contact_name, patients.emergency_contact_name),
+        emergency_contact_phone = COALESCE(EXCLUDED.emergency_contact_phone, patients.emergency_contact_phone),
+        emergency_contact_relation = COALESCE(EXCLUDED.emergency_contact_relation, patients.emergency_contact_relation),
+        allergies = COALESCE(EXCLUDED.allergies, patients.allergies),
+        chronic_conditions = COALESCE(EXCLUDED.chronic_conditions, patients.chronic_conditions),
+        current_medications = COALESCE(EXCLUDED.current_medications, patients.current_medications),
         updated_at = CURRENT_TIMESTAMP
-      WHERE user_id = $12
       RETURNING *
       `,
       [
@@ -142,19 +169,13 @@ router.put("/profile", authenticate, async (req, res) => {
       ]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: "Patient profile not found",
-      });
-    }
-
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully",
       profile: result.rows[0],
       patient: result.rows[0],
     });
+
   } catch (error) {
     console.error("Update my profile error:", error);
 

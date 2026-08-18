@@ -2,7 +2,9 @@ import express from "express";
 
 import {
   createMedicalRecord,
+  createDoctorMedicalRecord,
   getMyMedicalRecords,
+  getPatientRecordsForDoctor,
   getMedicalRecordById,
   updateMedicalRecord,
   deleteMedicalRecord,
@@ -18,11 +20,19 @@ MEDICAL RECORD ROUTES
 ===========================================================
 */
 
-// Create medical record
+// Create medical record by doctor for a patient
+// POST /api/medical-records/doctor
+router.post("/doctor", authenticate, createDoctorMedicalRecord);
+
+// Get medical records for a specific patient (Doctor view)
+// GET /api/medical-records/patient/:patientId
+router.get("/patient/:patientId", authenticate, getPatientRecordsForDoctor);
+
+// Create medical record (Patient view)
 // POST /api/medical-records
 router.post("/", authenticate, createMedicalRecord);
 
-// Get my medical records
+// Get my medical records (Patient view)
 // GET /api/medical-records
 router.get("/", authenticate, getMyMedicalRecords);
 
@@ -38,4 +48,4 @@ router.put("/:id", authenticate, updateMedicalRecord);
 // DELETE /api/medical-records/:id
 router.delete("/:id", authenticate, deleteMedicalRecord);
 
-export default router;
+export default router;

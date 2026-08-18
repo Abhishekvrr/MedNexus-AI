@@ -13,6 +13,7 @@ import authRoutes from "./routes/authRoutes.js";
 import appointmentRoutes from "./routes/appointmentRoutes.js";
 import patientRoutes from "./routes/patientRoutes.js";
 import doctorRoutes from "./routes/doctorRoutes.js";
+import doctorsRoutes from "./routes/doctorsRoutes.js";
 
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import medicalRecordsRoutes from "./routes/medicalRecordsRoutes.js";
@@ -166,6 +167,12 @@ app.use(
   patientRoutes
 );
 
+app.use(
+  "/api/patient",
+  patientRoutes
+);
+
+
 // ============================================================
 // DOCTOR ROUTES
 // ============================================================
@@ -173,6 +180,11 @@ app.use(
 app.use(
   "/api/doctor",
   doctorRoutes
+);
+
+app.use(
+  "/api/doctors",
+  doctorsRoutes
 );
 
 // ============================================================

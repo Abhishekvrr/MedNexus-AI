@@ -2,6 +2,7 @@ import express from "express";
 
 import {
   analyzeHealth,
+  doctorChat,
 } from "../controllers/aiController.js";
 
 import authenticate from "../middleware/authMiddleware.js";
@@ -14,15 +15,20 @@ MEDNEXUS AI ROUTES
 ===========================================================
 */
 
-/*
-Analyze patient's current health concern
-
-POST /api/ai/analyze
-*/
+// Patient Symptom & Health Analysis
+// POST /api/ai/analyze
 router.post(
   "/analyze",
   authenticate,
   analyzeHealth
 );
 
-export default router;
+// Doctor Clinical Copilot Chat
+// POST /api/ai/doctor-chat
+router.post(
+  "/doctor-chat",
+  authenticate,
+  doctorChat
+);
+
+export default router;

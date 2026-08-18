@@ -1,10 +1,13 @@
+import "dotenv/config";
 import Groq from "groq-sdk";
 
 import { buildRAGContext } from "../rag/ragService.js";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+const getGroqClient = () => {
+  return new Groq({
+    apiKey: process.env.GROQ_API_KEY,
+  });
+};
 
 /*
 =======================================================
@@ -489,9 +492,9 @@ those records exist.
     */
 
     const completion =
-      await groq.chat.completions.create({
+      await getGroqClient().chat.completions.create({
         model:
-          "llama-3.3-70b-versatile",
+          process.env.GROQ_MODEL || "openai/gpt-oss-120b",
 
         temperature: 0.1,
 
@@ -896,17 +899,6 @@ Return ONLY valid JSON.
       analysis:
         parsedResponse,
 
-      /*
-      RAG source metadata is returned separately.
-
-      This lets the frontend later show something like:
-
-      "Based on 2 medical reference sources"
-
-      without exposing the internal knowledge content
-      directly to the patient.
-      */
-
       rag: {
         knowledge_sources:
           ragContext.retrieved_knowledge.map(
@@ -934,6 +926,122 @@ Return ONLY valid JSON.
       error
     );
 
+    throw error;
+  }
+};
+
+/*
+=======================================================
+DOCTOR CLINICAL COPILOT
+=======================================================
+*/
+export const chatWithDoctorCopilot = async ({
+  doctor,
+  patients = [],
+  appointments = [],
+  prescriptions = [],
+  query: userQuery,
+  history = [],
+}) => {
+  try {
+    const groq = getGroqClient();
+    const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+
+    const doctorName = doctor?.doctor_name || doctor?.full_name || "Doctor";
+    const specialization = doctor?.specialization || "General Medicine";
+
+    // Format patient context
+    const patientsContext = patients.length > 0
+      ? patients.map((p, idx) => `
+Patient #${idx + 1}:
+- Name: ${p.full_name || "Unknown"}
+- Email: ${p.email || "N/A"} | Phone: ${p.phone || "N/A"}
+- Gender: ${p.gender || "Unspecified"} | DOB: ${p.date_of_birth || "N/A"} | Blood Group: ${p.blood_group || "N/A"}
+- Allergies: ${p.allergies || "None reported"}
+- Chronic Conditions: ${p.chronic_conditions || "None documented"}
+- Current Medications: ${p.current_medications || "None"}
+- Total Appointments with you: ${p.appointment_count || 1}
+- Last Appointment: ${p.last_appointment || "Recent"}
+`).join("\n")
+      : "No assigned patients currently on record.";
+
+    // Format appointment context
+    const appointmentsContext = appointments.length > 0
+      ? appointments.map((a, idx) => `
+Appointment #${idx + 1}:
+- Patient: ${a.patient_name || "Patient"} (${a.patient_email || "N/A"})
+- Date & Time: ${String(a.appointment_date).slice(0, 10)} at ${a.appointment_time || "Scheduled time"}
+- Type: ${a.appointment_type || "in_person"}
+- Status: ${a.status || "scheduled"}
+- Reason / Complaint: ${a.reason || "General Consultation"}
+`).join("\n")
+      : "No appointments scheduled currently.";
+
+    // Format prescriptions context
+    const prescriptionsContext = prescriptions.length > 0
+      ? prescriptions.map((pr, idx) => `
+Prescription #${idx + 1}:
+- Patient: ${pr.patient_name || pr.patient_id}
+- Medicine: ${pr.medicine_name} (${pr.dosage || "Standard dose"})
+- Frequency: ${pr.frequency || "As directed"} | Duration: ${pr.duration || "Course"}
+- Status: ${pr.status || "active"} | Instructions: ${pr.instructions || "None"}
+`).join("\n")
+      : "No prescriptions issued yet.";
+
+    const systemPrompt = `You are MedNexus AI Doctor Clinical Copilot, an elite, MD-level clinical decision support and practice intelligence assistant built specifically for licensed medical professionals.
+
+You are assisting Dr. ${doctorName}, specialized in ${specialization}.
+
+=== DOCTOR PRACTICE & CLINICAL DATABASE CONTEXT ===
+[Assigned Patients Registry]
+${patientsContext}
+
+[Consultation Schedule & Appointments]
+${appointmentsContext}
+
+[Issued Prescriptions]
+${prescriptionsContext}
+
+=== YOUR CAPABILITIES & CLINICAL DIRECTIVES ===
+1. Patient Queries (e.g. "show me patient details", "tell me about Test Patient"): Provide structured, professional patient clinical summaries with demographics, allergies, chronic conditions, current medications, and visit history.
+2. Schedule & Practice Operations: Provide precise appointment summaries, pending/confirmed queues, and consultation counts.
+3. Pharmacology & Drug Safety: Provide accurate drug-drug interaction warnings, standard therapeutic dosages, renal/hepatic adjustments, and side-effect profiles.
+4. Clinical Decision Support: Offer evidence-based differential diagnoses, diagnostic workup recommendations, and guideline-adherent treatment protocols.
+5. Tone & Structure: Professional, concise, physician-to-physician communication. Use Markdown formatting (bolding, bullet points, tables, caution boxes) for high readability.`;
+
+    const messages = [
+      { role: "system", content: systemPrompt },
+    ];
+
+    // Append conversation history
+    if (Array.isArray(history)) {
+      for (const msg of history.slice(-6)) {
+        if (msg.role === "user" || msg.type === "user") {
+          messages.push({ role: "user", content: msg.content || msg.text });
+        } else if (msg.role === "assistant" || msg.type === "ai") {
+          messages.push({ role: "assistant", content: msg.content || msg.text });
+        }
+      }
+    }
+
+    // Append current user query
+    messages.push({ role: "user", content: userQuery });
+
+    const completion = await groq.chat.completions.create({
+      model,
+      messages,
+      temperature: 0.3,
+      max_tokens: 1500,
+    });
+
+    const reply = completion.choices[0]?.message?.content || "I am unable to process this request at the moment.";
+
+    return {
+      success: true,
+      reply,
+    };
+  } catch (error) {
+    console.error("Doctor AI Copilot error:", error);
     throw error;
   }
 };

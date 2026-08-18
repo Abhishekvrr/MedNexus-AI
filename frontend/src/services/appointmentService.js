@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:5000/api";
+import API_BASE_URL from "../config/api";
 
 const getToken = () => {
   return localStorage.getItem("token");
@@ -45,7 +45,7 @@ const request = async (url, options = {}) => {
 };
 
 export const getAppointments = async () => {
-  return request(`${API_BASE_URL}/appointments`);
+  return request(`${API_BASE_URL}/api/appointments`);
 };
 
 export const updateAppointmentStatus = async (
@@ -53,7 +53,7 @@ export const updateAppointmentStatus = async (
   action
 ) => {
   return request(
-    `${API_BASE_URL}/appointments/${appointmentId}/${action}`,
+    `${API_BASE_URL}/api/appointments/${appointmentId}/${action}`,
     {
       method: "PUT",
     }

@@ -296,53 +296,26 @@ export default app;
 //
 // Vercel handles the HTTP server automatically.
 
-if (process.env.NODE_ENV !== "production") {
+if (!process.env.VERCEL) {
   const startServer = async () => {
     try {
       await pool.query("SELECT 1");
 
-      console.log(
-        "PostgreSQL connected"
-      );
-
-      console.log(
-        "Database: mednexus"
-      );
+      console.log("PostgreSQL connected");
+      console.log(`Database: ${process.env.PGDATABASE || "mednexus"}`);
 
       app.listen(PORT, () => {
         console.log("");
-        console.log(
-          "=============================================="
-        );
-
-        console.log(
-          "       MEDNEXUS AI BACKEND"
-        );
-
-        console.log(
-          "=============================================="
-        );
-
-        console.log(
-          `Server: http://localhost:${PORT}`
-        );
-
-        console.log(
-          `Health: http://localhost:${PORT}/api/health`
-        );
-
-        console.log(
-          "=============================================="
-        );
-
+        console.log("==============================================");
+        console.log("       MEDNEXUS AI BACKEND                    ");
+        console.log("==============================================");
+        console.log(`Server: http://localhost:${PORT}`);
+        console.log(`Health: http://localhost:${PORT}/api/health`);
+        console.log("==============================================");
         console.log("");
       });
     } catch (error) {
-      console.error(
-        "Database connection failed:",
-        error
-      );
-
+      console.error("Database connection failed:", error);
       process.exit(1);
     }
   };

@@ -9,5 +9,17 @@
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:backend": "npm --prefix backend run dev",
     "start": "npm --prefix backend start"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "groq-sdk": "^1.5.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.0",
+    "nodemailer": "^9.0.5",
+    "pg": "^8.16.3"
   }
 }

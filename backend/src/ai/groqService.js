@@ -1045,3 +1045,401 @@ ${prescriptionsContext}
     throw error;
   }
 };
+
+/*
+=======================================================
+AMBIENT CLINICAL VOICE SCRIBE (TRANSCRIPT TO SOAP + RX)
+=======================================================
+*/
+export const generateAmbientSOAPNote = async ({
+  transcript,
+  doctorName = "Doctor",
+  specialization = "General Practice",
+  patientName = "Patient",
+}) => {
+  try {
+    const groq = getGroqClient();
+    const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+
+    const systemPrompt = `You are MedNexus AI Ambient Clinical Scribe, an MD-grade assistant that listens to real-time doctor-patient conversation transcripts and converts them into structured SOAP clinical notes and extracted prescription recommendations.
+
+Return ONLY valid JSON matching this schema:
+{
+  "chief_complaint": "Primary complaint summarized in 1 sentence",
+  "subjective": "Detailed symptoms, onset, duration, patient-reported feelings and history of present illness",
+  "objective": "Vital signs mentioned, physical examination observations, clinician findings",
+  "assessment": "Differential diagnosis and primary clinical impression",
+  "plan": "Diagnostic workup, lifestyle advice, follow-up timeline, patient education",
+  "extracted_prescriptions": [
+    {
+      "medicine_name": "Standard drug brand or generic name",
+      "dosage": "e.g. 500mg, 10ml, 1 tablet",
+      "frequency": "e.g. 1-0-1, 1-0-0, 0-0-1, or SOS",
+      "duration": "e.g. 5 days, 14 days, 1 month",
+      "instructions": "e.g. Take after food with water"
+    }
+  ],
+  "follow_up_days": 7,
+  "clinical_summary": "Concise 2-sentence summary for the patient chart"
+}`;
+
+    const completion = await groq.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Doctor: Dr. ${doctorName} (${specialization})\nPatient: ${patientName}\n\n[CONVERSATION TRANSCRIPT]:\n${transcript}` },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 2000,
+    });
+
+    const content = completion.choices[0]?.message?.content || "{}";
+    const parsed = JSON.parse(content);
+
+    return {
+      success: true,
+      soapNote: parsed,
+    };
+  } catch (error) {
+    console.error("Ambient Scribe AI error:", error);
+    throw error;
+  }
+};
+
+/*
+=======================================================
+AI PRESCRIPTION DECODER & MULTILINGUAL VOICE EXPLAINER
+=======================================================
+*/
+export const decodePrescriptionAI = async ({
+  prescriptionText,
+  patientLanguage = "en",
+}) => {
+  try {
+    const groq = getGroqClient();
+    const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+
+    const systemPrompt = `You are MedNexus AI Smart Prescription Decoder. Your job is to take raw, messy, or scanned prescription text and explain it with crystal clarity so a patient, caregiver, or elderly person can easily understand when, how, and why to take their medication without mistakes.
+
+Return ONLY valid JSON matching this schema:
+{
+  "summary": "Clear, friendly 2-sentence overview of the prescribed treatment course",
+  "medications": [
+    {
+      "name": "Medicine name",
+      "purpose": "What this medicine is for in simple terms",
+      "dosage": "Dosage amount",
+      "timing_slots": {
+        "morning": true,
+        "afternoon": false,
+        "night": true
+      },
+      "schedule_label": "e.g. 1-0-1 (Morning & Night)",
+      "food_relation": "Before food | After food | With plenty of water",
+      "duration": "e.g. 5 days",
+      "critical_caution": "Important warning (e.g. Do not consume alcohol, Complete full course)"
+    }
+  ],
+  "daily_timeline": [
+    { "time_slot": "Morning (8:00 AM)", "items": ["Medicine 1 (After breakfast)"] },
+    { "time_slot": "Afternoon (1:30 PM)", "items": [] },
+    { "time_slot": "Night (9:00 PM)", "items": ["Medicine 1 (After dinner)"] }
+  ],
+  "voice_script_en": "Natural spoken explanation in English suitable for speech synthesis",
+  "voice_script_hi": "Natural spoken explanation in Hindi (Devanagari or Romanized clear Hindi) for audio playback",
+  "voice_script_es": "Natural spoken explanation in Spanish for audio playback",
+  "emergency_warning": "Warning signs that require immediate doctor call"
+}`;
+
+    const completion = await groq.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Decode and structure this prescription text:\n\n${prescriptionText}` },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 2000,
+    });
+
+    const content = completion.choices[0]?.message?.content || "{}";
+    const parsed = JSON.parse(content);
+
+    return {
+      success: true,
+      decoded: parsed,
+    };
+  } catch (error) {
+    console.error("Prescription Decoder AI error:", error);
+    throw error;
+  }
+};
+
+/*
+=======================================================
+BIOMETRIC RADAR & 5-YEAR DISEASE RISK SIMULATOR
+=======================================================
+*/
+export const simulateHealthRiskTrajectory = async ({
+  vitals,
+  patient,
+}) => {
+  try {
+    const groq = getGroqClient();
+    const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+
+    const systemPrompt = `You are MedNexus AI Biometric Health Forecaster. Given patient vitals and health history, calculate biometric organ stress levels (0-100 scale) and simulate a 5-year disease risk trajectory showing current risk vs. potential risk if target metrics are improved.
+
+Return ONLY valid JSON matching this schema:
+{
+  "organ_stress": {
+    "cardiovascular": { "score": 68, "status": "Moderate Stress", "primary_driver": "Systolic BP 142 mmHg" },
+    "metabolic": { "score": 75, "status": "High Stress", "primary_driver": "Fasting Glucose 165 mg/dL" },
+    "renal": { "score": 35, "status": "Optimal", "primary_driver": "Hydration and filtration normal" },
+    "neurological": { "score": 25, "status": "Low Stress", "primary_driver": "Sleep & vitals stable" },
+    "respiratory": { "score": 20, "status": "Optimal", "primary_driver": "SpO2 98%" }
+  },
+  "five_year_trajectory": {
+    "current_path_risk_score": 58,
+    "optimized_path_risk_score": 18,
+    "risk_reduction_percentage": 68,
+    "projected_milestones": [
+      { "year": "Year 1", "current_forecast": "Sustained arterial tension", "optimized_forecast": "Blood pressure normalized to 120/80" },
+      { "year": "Year 3", "current_forecast": "Pre-diabetic progression risk", "optimized_forecast": "HbA1c stabilized below 5.7%" },
+      { "year": "Year 5", "current_forecast": "42% elevated cardiac event risk", "optimized_forecast": "Cardiovascular risk lowered to baseline" }
+    ],
+    "high_impact_interventions": [
+      "Lower daily sodium intake below 2,000mg to drop systolic BP by 8-10 points",
+      "30 minutes of brisk walking 5 days/week to boost insulin sensitivity",
+      "Regular adherence to prescribed maintenance therapy"
+    ]
+  },
+  "overall_health_grade": "B-",
+  "executive_summary": "Comprehensive 2-sentence summary of biometric state"
+}`;
+
+    const completion = await groq.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Patient Data:\n${JSON.stringify({ vitals, patient }, null, 2)}` },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 1500,
+    });
+
+    const content = completion.choices[0]?.message?.content || "{}";
+    const parsed = JSON.parse(content);
+
+    return {
+      success: true,
+      trajectory: parsed,
+    };
+  } catch (error) {
+    console.error("Biometric Forecaster AI error:", error);
+    throw error;
+  }
+};
+
+/*
+=======================================================
+DISEASE-SPECIFIC FOOD & NUTRITION DIET PLANNER
+=======================================================
+*/
+export const generateDiseaseDietPlan = async ({
+  diseaseOrSymptoms,
+  patient,
+  vitals,
+}) => {
+  try {
+    const groq = getGroqClient();
+    const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+
+    const systemPrompt = `You are MedNexus AI Clinical Nutritionist & Metabolic Specialist. Given a patient's diagnosed condition, symptoms, and health vitals, generate a scientifically grounded, patient-friendly dietary and nutrition plan.
+
+Return ONLY valid JSON matching this schema:
+{
+  "condition_title": "e.g. Therapeutic Diet for Acute Bronchitis & Respiratory Recovery",
+  "nutritional_summary": "2-3 sentences explaining how this diet accelerates recovery and reduces cellular inflammation",
+  "foods_to_eat": [
+    { "category": "Proteins / Repair", "items": ["Warm bone broth or lentil soup", "Steamed fish or tofu"], "benefit": "Provides amino acids for immune tissue repair" },
+    { "category": "Anti-inflammatory & Antioxidants", "items": ["Ginger-turmeric tea with honey", "Berries and citrus fruits"], "benefit": "Soothes inflamed respiratory mucosa" },
+    { "category": "Hydration & Electrolytes", "items": ["Warm lemon water", "Coconut water"], "benefit": "Thins mucus secretions and maintains cellular fluid balance" }
+  ],
+  "foods_to_avoid": [
+    { "food": "Ice-cold drinks & ice cream", "reason": "Can trigger bronchial spasms and thicken respiratory secretions" },
+    { "food": "Deep-fried & heavy oily foods", "reason": "Induces acid reflux and gastric distension, worsening breathlessness" },
+    { "food": "Excessive refined sugar", "reason": "Suppresses white blood cell phagocytic activity" }
+  ],
+  "daily_meal_plan": {
+    "breakfast": "Warm oatmeal with crushed almonds and a cup of ginger-tulsi tea",
+    "mid_morning": "Fresh pomegranate or orange slices with a glass of lukewarm water",
+    "lunch": "Steamed brown rice or quinoa with mixed vegetable curry and warm lentil dal",
+    "evening_snack": "Steamed edamame or roasted chickpeas with herbal chamomile tea",
+    "dinner": "Light vegetable stew or clear chicken broth with soft sourdough"
+  },
+  "hydration_target": "2.5 to 3.0 Liters daily (preferably warm fluids)",
+  "clinical_diet_tip": "Important lifestyle or timing tip (e.g. Eat dinner at least 2.5 hours before sleeping)"
+}`;
+
+    const completion = await groq.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Condition/Symptoms: ${diseaseOrSymptoms}\nPatient: ${JSON.stringify({ patient, vitals }, null, 2)}` },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 2000,
+    });
+
+    const content = completion.choices[0]?.message?.content || "{}";
+    const parsed = JSON.parse(content);
+
+    return {
+      success: true,
+      dietPlan: parsed,
+    };
+  } catch (error) {
+    console.error("Diet Planner AI error:", error);
+    throw error;
+  }
+};
+
+/*
+=======================================================
+NATURAL LANGUAGE TABLET & LAB REPORT EXPLAINER (NLP Q&A)
+=======================================================
+*/
+export const explainTabletAndReportNLP = async ({
+  question,
+  prescriptions = [],
+  medicalRecords = [],
+  labReports = [],
+  patient = {},
+}) => {
+  try {
+    const groq = getGroqClient();
+    const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+
+    const rxContext = prescriptions.map((p) => `- ${p.medicine_name} (${p.dosage || ""}) | Freq: ${p.frequency || ""} | Instructions: ${p.instructions || "None"}`).join("\n") || "No active prescriptions documented.";
+    const labContext = labReports.map((l) => `- ${l.test_name}: ${l.result_value} ${l.unit || ""} (Ref: ${l.reference_range || "N/A"}) [Status: ${l.status}]`).join("\n") || "No recent lab reports.";
+    const recordContext = medicalRecords.map((m) => `- ${m.diagnosis || "Consultation"}: ${m.treatment || ""}`).join("\n") || "No previous records.";
+
+    const systemPrompt = `You are MedNexus AI Patient Medication & Lab Explainer. A patient is asking a question in natural language about their prescribed tablets, dosage, food interactions, side-effects, or laboratory test results.
+
+=== PATIENT ACTIVE CLINICAL DATA ===
+[Prescribed Medicines]:
+${rxContext}
+
+[Lab Results]:
+${labContext}
+
+[Medical Chart / Diagnoses]:
+${recordContext}
+
+[Allergies]: ${patient.allergies || "None reported"}
+
+=== DIRECTIVES ===
+1. Answer the patient's exact question clearly in warm, simple, empathetic language.
+2. Explain *why* their doctor prescribed the medicine or what their lab test value means in plain terms.
+3. Highlight critical food/drink interactions (e.g. take with water, avoid grapefruit, avoid alcohol, take with food to prevent gastritis).
+4. Provide structured caution points if relevant.
+5. Always remind the patient to verify any major regimen changes with their prescribing doctor.
+
+Return ONLY valid JSON matching this schema:
+{
+  "answer": "Clear, comprehensive, and reassuring answer to the patient's question",
+  "medicine_or_test_highlighted": "Name of medicine or test discussed",
+  "key_takeaways": [
+    "Important takeaway 1",
+    "Important takeaway 2"
+  ],
+  "food_and_drink_cautions": [
+    "e.g. Take after food to prevent stomach irritation",
+    "Avoid alcohol during this course"
+  ],
+  "when_to_alert_doctor": "Specific signs that require immediate physician call"
+}`;
+
+    const completion = await groq.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Patient Question: "${question}"` },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 1500,
+    });
+
+    const content = completion.choices[0]?.message?.content || "{}";
+    const parsed = JSON.parse(content);
+
+    return {
+      success: true,
+      data: parsed,
+    };
+  } catch (error) {
+    console.error("Tablet Explainer AI error:", error);
+    throw error;
+  }
+};
+
+/*
+=======================================================
+POST-MEDICATION RECOVERY CHECK-IN & WELL-WISHER
+=======================================================
+*/
+export const generatePostTreatmentCheckIn = async ({
+  completedPrescription,
+  doctorName = "your doctor",
+  patientName = "Patient",
+}) => {
+  try {
+    const groq = getGroqClient();
+    const model = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+
+    const systemPrompt = `You are MedNexus AI Empathetic Clinical Care Concierge. A patient has just finished their prescribed medication course (or reached their follow-up milestone).
+
+Generate a caring, personalized check-in message to evaluate their recovery, ask about their symptom resolution, and provide smooth guidance if they need a follow-up consultation with their doctor.
+
+Return ONLY valid JSON matching this schema:
+{
+  "greeting": "Personalized, warm greeting to the patient",
+  "checkin_message": "Empathetic 2-3 sentence message recognizing the completed medicine course and asking how they feel now",
+  "recovery_assessment_options": [
+    { "id": "recovered", "label": "Fully Recovered 😊", "sub": "No more symptoms or discomfort" },
+    { "id": "better", "label": "Much Better 🤔", "sub": "Mild lingering symptoms" },
+    { "id": "unwell", "label": "Still Unwell / Recurring 🤒", "sub": "Need doctor follow-up" }
+  ],
+  "advice_if_unwell": "Reassuring message explaining why a follow-up visit with Dr. [Doctor] is recommended if symptoms persist",
+  "suggest_follow_up": true,
+  "follow_up_doctor_name": "${doctorName}"
+}`;
+
+    const completion = await groq.chat.completions.create({
+      model,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Patient: ${patientName}\nCompleted Prescription: ${JSON.stringify(completedPrescription, null, 2)}\nPrescribing Doctor: Dr. ${doctorName}` },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+      max_tokens: 1000,
+    });
+
+    const content = completion.choices[0]?.message?.content || "{}";
+    const parsed = JSON.parse(content);
+
+    return {
+      success: true,
+      checkIn: parsed,
+    };
+  } catch (error) {
+    console.error("Recovery check-in AI error:", error);
+    throw error;
+  }
+};

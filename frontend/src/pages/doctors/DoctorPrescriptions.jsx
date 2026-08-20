@@ -111,6 +111,23 @@ function DoctorPrescriptions() {
 
   useEffect(() => {
     loadData();
+
+    // Check for draft prescriptions from AI Ambient Voice Scribe
+    const draftRx = localStorage.getItem("mednexus_draft_prescriptions");
+    if (draftRx) {
+      try {
+        const parsed = JSON.parse(draftRx);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMedicines(parsed);
+          setShowCreateModal(true);
+          setSuccess("✨ Auto-loaded extracted medications from AI Ambient Consultation Scribe!");
+        }
+      } catch (e) {
+        console.warn("Failed to parse draft rx:", e);
+      } finally {
+        localStorage.removeItem("mednexus_draft_prescriptions");
+      }
+    }
   }, []);
 
   // Add another medicine row

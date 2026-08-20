@@ -7,6 +7,8 @@ import {
   deleteHealthMetric,
 } from "../controllers/healthMetricsController.js";
 
+import { getBiometricRadarData } from "../controllers/biometricRadarController.js";
+
 import authenticate from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -16,6 +18,10 @@ const router = express.Router();
 HEALTH METRICS ROUTES
 ===========================================================
 */
+
+// Biometric Organ Radar & 5-Year Trajectory
+// POST /api/health-metrics/biometric-radar
+router.post("/biometric-radar", authenticate, getBiometricRadarData);
 
 // Record new health metrics
 // POST /api/health-metrics

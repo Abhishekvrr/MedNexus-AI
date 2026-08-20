@@ -1,0 +1,20 @@
+// MedNexus AI Service Worker for Mobile PWA Caching
+const CACHE_NAME = "mednexus-cache-v1";
+
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(clients.claim());
+});
+
+self.addEventListener("fetch", (event) => {
+  // Let network handle dynamic API requests, fallback if needed
+  if (event.request.url.includes("/api/")) {
+    return;
+  }
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request))
+  );
+});

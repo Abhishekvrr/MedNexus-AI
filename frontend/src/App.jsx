@@ -29,10 +29,15 @@ import Appointments from "./pages/appointments/Appointments";
 import Doctors from "./pages/doctors/Doctors";
 import MedicalRecords from "./pages/medical-records/MedicalRecords";
 import Prescriptions from "./pages/prescriptions/Prescriptions";
+import PrescriptionDecoder from "./pages/prescriptions/PrescriptionDecoder";
+import EmergencyPass from "./pages/emergency/EmergencyPass";
+import BiometricRadar from "./pages/health-metrics/BiometricRadar";
 import LabReports from "./pages/lab-reports/LabReports";
 import HealthMetrics from "./pages/health-metrics/HealthMetrics";
 import Family from "./pages/family/Family";
 import AIAssistant from "./pages/ai/AIAssistant";
+import DietPlanner from "./pages/ai/DietPlanner";
+import PharmacyCart from "./pages/pharmacy/PharmacyCart";
 import Notifications from "./pages/notifications/Notifications";
 import Profile from "./pages/profile/Profile";
 
@@ -44,6 +49,7 @@ import DoctorDashboard from "./pages/doctors/DoctorDashboard";
 import DoctorAppointments from "./pages/doctors/DoctorAppointments";
 import DoctorMedicalRecords from "./pages/doctors/DoctorMedicalRecords";
 import DoctorAI from "./pages/doctors/DoctorAI";
+import DoctorVoiceScribe from "./pages/doctors/DoctorVoiceScribe";
 import DoctorProfile from "./pages/doctors/DoctorProfile";
 import DoctorPatients from "./pages/doctors/DoctorPatients";
 import DoctorPrescriptions from "./pages/doctors/DoctorPrescriptions";
@@ -229,6 +235,12 @@ function App() {
           element={<Register />}
         />
 
+        {/* Public Paramedic First-Responder View (No Auth Required) */}
+        <Route
+          path="/emergency/:patientId"
+          element={<EmergencyPass />}
+        />
+
         {/* ==================================================
             PATIENT PROTECTED AREA
         ================================================== */}
@@ -240,6 +252,21 @@ function App() {
             <Route
               path="/dashboard"
               element={<Dashboard />}
+            />
+
+            <Route
+              path="/emergency-pass"
+              element={<EmergencyPass />}
+            />
+
+            <Route
+              path="/prescription-decoder"
+              element={<PrescriptionDecoder />}
+            />
+
+            <Route
+              path="/biometric-radar"
+              element={<BiometricRadar />}
             />
 
             <Route
@@ -283,6 +310,21 @@ function App() {
             />
 
             <Route
+              path="/diet-planner"
+              element={<DietPlanner />}
+            />
+
+            <Route
+              path="/pharmacy"
+              element={<PharmacyCart />}
+            />
+
+            <Route
+              path="/pharmacy/cart"
+              element={<PharmacyCart />}
+            />
+
+            <Route
               path="/notifications"
               element={<Notifications />}
             />
@@ -308,6 +350,12 @@ function App() {
             <Route
               path="/doctor-dashboard"
               element={<DoctorDashboard />}
+            />
+
+            {/* Doctor AI Ambient Voice Scribe */}
+            <Route
+              path="/doctor-voice-scribe"
+              element={<DoctorVoiceScribe />}
             />
 
             {/* Doctor Appointment Management */}

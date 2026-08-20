@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   HeartPulse,
   Activity,
@@ -14,6 +15,11 @@ import {
   UserRound,
   Clock3,
   MapPin,
+  ShieldAlert,
+  Sparkles,
+  Volume2,
+  ShoppingBag,
+  Salad,
 } from "lucide-react";
 
 import API_BASE_URL from "../../config/api";
@@ -213,6 +219,141 @@ function Dashboard() {
       {/* DASHBOARD */}
       {!loading && dashboard && (
         <>
+          {/* UNIQUE MARKET INNOVATIONS QUICK HUB */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: "14px",
+              marginTop: "20px",
+            }}
+          >
+            {/* EMERGENCY PASS CARD */}
+            <Link
+              to="/emergency-pass"
+              style={{
+                textDecoration: "none",
+                background: "#fff1f2",
+                border: "1px solid #fecdd3",
+                borderRadius: "14px",
+                padding: "16px",
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                boxShadow: "0 2px 8px rgba(225,29,72,0.06)",
+                transition: "all 0.2s",
+              }}
+            >
+              <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "#ffe4e6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <ShieldAlert size={22} color="#e11d48" />
+              </div>
+              <div>
+                <div style={{ fontSize: "14px", fontWeight: "800", color: "#9f1239" }}>🚨 Emergency "Beacon" QR Pass</div>
+                <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>First-responder scannable card & 1-tap SOS</div>
+              </div>
+            </Link>
+
+            {/* AI PRESCRIPTION DECODER CARD */}
+            <Link
+              to="/prescription-decoder"
+              style={{
+                textDecoration: "none",
+                background: "#eef2ff",
+                border: "1px solid #c7d2fe",
+                borderRadius: "14px",
+                padding: "16px",
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                boxShadow: "0 2px 8px rgba(79,70,229,0.06)",
+                transition: "all 0.2s",
+              }}
+            >
+              <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "#e0e7ff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Volume2 size={22} color="#4f46e5" />
+              </div>
+              <div>
+                <div style={{ fontSize: "14px", fontWeight: "800", color: "#3730a3" }}>🎙️ AI Rx Decoder & Voice</div>
+                <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>Multilingual spoken dosage explainer</div>
+              </div>
+            </Link>
+
+            {/* BIOMETRIC RADAR CARD */}
+            <Link
+              to="/biometric-radar"
+              style={{
+                textDecoration: "none",
+                background: "#ecfdf5",
+                border: "1px solid #a7f3d0",
+                borderRadius: "14px",
+                padding: "16px",
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                boxShadow: "0 2px 8px rgba(5,150,105,0.06)",
+                transition: "all 0.2s",
+              }}
+            >
+              <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "#d1fae5", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Activity size={22} color="#059669" />
+              </div>
+              <div>
+                <div style={{ fontSize: "14px", fontWeight: "800", color: "#065f46" }}>🫀 Biometric Organ 5Y Radar</div>
+                <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>Interactive organ stress & risk simulator</div>
+              </div>
+            </Link>
+
+            {/* APOLLO PHARMACY DELIVERY CARD */}
+            <Link
+              to="/pharmacy"
+              style={{
+                textDecoration: "none",
+                background: "#f0fdf4",
+                border: "1px solid #bbf7d0",
+                borderRadius: "14px",
+                padding: "16px",
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                boxShadow: "0 2px 8px rgba(22,163,74,0.06)",
+                transition: "all 0.2s",
+              }}
+            >
+              <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "#dcfce7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <ShoppingBag size={22} color="#16a34a" />
+              </div>
+              <div>
+                <div style={{ fontSize: "14px", fontWeight: "800", color: "#166534" }}>🛒 Apollo Pharmacy Delivery</div>
+                <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>1-Click prescription medicine order & tracking</div>
+              </div>
+            </Link>
+
+            {/* DIET & NUTRITION PLANNER CARD */}
+            <Link
+              to="/diet-planner"
+              style={{
+                textDecoration: "none",
+                background: "#fffbeb",
+                border: "1px solid #fde68a",
+                borderRadius: "14px",
+                padding: "16px",
+                display: "flex",
+                alignItems: "center",
+                gap: "14px",
+                boxShadow: "0 2px 8px rgba(217,119,6,0.06)",
+                transition: "all 0.2s",
+              }}
+            >
+              <div style={{ width: "42px", height: "42px", borderRadius: "10px", background: "#fef3c7", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <Salad size={22} color="#d97706" />
+              </div>
+              <div>
+                <div style={{ fontSize: "14px", fontWeight: "800", color: "#92400e" }}>🥗 Disease Food & Nutrition Diet</div>
+                <div style={{ fontSize: "12px", color: "#64748b", marginTop: "2px" }}>AI personalized meals, foods to eat & avoid</div>
+              </div>
+            </Link>
+          </div>
+
           {/* TOP SECTION */}
           <div
             className="dashboard-top-grid"
@@ -221,7 +362,7 @@ function Dashboard() {
               gridTemplateColumns:
                 "minmax(230px, 0.8fr) minmax(0, 2fr) minmax(230px, 0.8fr)",
               gap: "16px",
-              marginTop: "24px",
+              marginTop: "20px",
               alignItems: "stretch",
               width: "100%",
               minWidth: 0,

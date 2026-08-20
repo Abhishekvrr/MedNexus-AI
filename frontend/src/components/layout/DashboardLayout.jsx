@@ -17,7 +17,14 @@ import {
   UserRound,
   FlaskConical,
   Pill,
+  Sparkles,
+  ShieldAlert,
+  Mic,
+  ShoppingBag,
+  Salad,
 } from "lucide-react";
+
+import MobileBottomNav from "./MobileBottomNav";
 
 function DashboardLayout() {
   const location = useLocation();
@@ -113,6 +120,21 @@ function DashboardLayout() {
       icon: Activity,
     },
     {
+      path: "/emergency-pass",
+      label: "Emergency QR Pass",
+      icon: ShieldAlert,
+    },
+    {
+      path: "/prescription-decoder",
+      label: "AI Rx Decoder & Voice",
+      icon: Sparkles,
+    },
+    {
+      path: "/biometric-radar",
+      label: "Biometric 5Y Radar",
+      icon: Activity,
+    },
+    {
       path: "/appointments",
       label: "Appointments",
       icon: CalendarCheck,
@@ -131,6 +153,16 @@ function DashboardLayout() {
       path: "/prescriptions",
       label: "Prescriptions",
       icon: Pill,
+    },
+    {
+      path: "/pharmacy",
+      label: "Apollo Pharmacy Cart",
+      icon: ShoppingBag,
+    },
+    {
+      path: "/diet-planner",
+      label: "Diet & Nutrition Plan",
+      icon: Salad,
     },
     {
       path: "/lab-reports",
@@ -173,6 +205,11 @@ function DashboardLayout() {
       path: "/doctor-dashboard",
       label: "Dashboard",
       icon: Activity,
+    },
+    {
+      path: "/doctor-voice-scribe",
+      label: "AI Ambient Scribe",
+      icon: Mic,
     },
     {
       path: "/doctor-appointments",
@@ -361,6 +398,12 @@ function DashboardLayout() {
       <main className="dashboard-main">
         <Outlet />
       </main>
+
+      {/* ======================================================
+          MOBILE APP BOTTOM NAVIGATION DOCK
+      ====================================================== */}
+
+      <MobileBottomNav isDoctor={isDoctor} />
 
       {/* ======================================================
           STYLES
@@ -713,32 +756,82 @@ function DashboardLayout() {
 
         }
 
-        @media (max-width: 650px) {
+        /* ====================================================
+           MOBILE BOTTOM NAVIGATION DOCK
+        ==================================================== */
 
-          .dashboard-layout {
-            flex-direction: column;
+        .mobile-bottom-nav {
+          display: none;
+        }
+
+        @media (max-width: 768px) {
+          .mobile-bottom-nav {
+            display: flex;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: #ffffff;
+            border-top: 1px solid #e2e8f0;
+            align-items: center;
+            justify-content: space-around;
+            padding: 0 12px;
+            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.06);
           }
 
-          .dashboard-sidebar {
+          .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            gap: 3px;
+            flex: 1;
+            padding: 6px 0;
+            transition: color 0.2s;
+          }
+
+          .mobile-nav-item.active {
+            color: #2563eb;
+          }
+
+          .mobile-fab-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
             position: relative;
+            top: -14px;
+            flex: 1;
+          }
 
-            width: 100%;
+          .mobile-fab-button {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+            border: 3px solid #ffffff;
+          }
 
-            height: auto;
-
-            min-height: auto;
+          .mobile-fab-label {
+            font-size: 10px;
+            font-weight: 800;
+            color: #ef4444;
+            margin-top: 2px;
           }
 
           .dashboard-main {
-            width: 100%;
-
-            margin-left: 0;
+            padding-bottom: 74px !important;
           }
-
-          .sidebar-navigation {
-            max-height: 450px;
-          }
-
         }
 
         `}

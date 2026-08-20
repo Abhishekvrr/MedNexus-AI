@@ -520,4 +520,4 @@ export const createDoctorMedicalRecord = async (req, res) => {
       error: error.message,
     });
   }
-};
+};

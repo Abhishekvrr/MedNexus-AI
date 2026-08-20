@@ -1,6 +1,12 @@
 import { query } from "../config/database.js";
 import { buildPatientContext } from "../services/patientContextService.js";
-import { analyzePatientHealth, chatWithDoctorCopilot } from "../ai/groqService.js";
+import {
+  analyzePatientHealth,
+  chatWithDoctorCopilot,
+  generateDiseaseDietPlan,
+  explainTabletAndReportNLP,
+  generatePostTreatmentCheckIn,
+} from "../ai/groqService.js";
 
 /*
 =======================================================
@@ -18,7 +24,9 @@ Build Patient Context
         ↓
 Groq AI Analysis
         ↓
-Return Structured Analysis
+Match Nearby Available Doctors
+        ↓
+Return Structured Analysis + Doctors
 =======================================================
 */
 
@@ -91,6 +99,45 @@ export const analyzeHealth = async (req, res) => {
 
     /*
     -------------------------------------------------------
+    MATCH NEARBY AVAILABLE DOCTORS FOR THE SPECIALTY
+    -------------------------------------------------------
+    */
+    const specialty = aiResult?.analysis?.doctor_recommendation?.specialty || "General Physician";
+    
+    const matchedDocs = await query(
+      `
+      SELECT 
+        d.id, 
+        d.specialization, 
+        d.qualification, 
+        d.experience_years, 
+        d.consultation_fee, 
+        d.rating, 
+        d.license_number,
+        d.available_for_online,
+        u.full_name as doctor_name, 
+        u.email, 
+        u.phone,
+        h.name as hospital_name, 
+        h.city as hospital_city
+      FROM doctors d
+      JOIN users u ON d.user_id = u.id
+      LEFT JOIN hospitals h ON d.hospital_id = h.id
+      ORDER BY 
+        (CASE WHEN d.specialization ILIKE $1 THEN 1 ELSE 2 END),
+        d.rating DESC NULLS LAST
+      LIMIT 4
+      `,
+      [`%${specialty.replace("Specialist", "").trim()}%`]
+    );
+
+    const fullAnalysis = {
+      ...aiResult.analysis,
+      matched_doctors: matchedDocs.rows,
+    };
+
+    /*
+    -------------------------------------------------------
     RETURN AI ANALYSIS
     -------------------------------------------------------
     */
@@ -98,7 +145,7 @@ export const analyzeHealth = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Health analysis generated successfully",
-      analysis: aiResult.analysis,
+      analysis: fullAnalysis,
     });
 
   } catch (error) {
@@ -288,4 +335,133 @@ const buildPatientContextByUserId = async (userId) => {
   const patientId = patientResult.rows[0].id;
 
   return await buildPatientContext(patientId);
+};
+
+/*
+=======================================================
+GENERATE DISEASE-SPECIFIC FOOD & NUTRITION DIET PLAN
+POST /api/ai/diet-plan
+=======================================================
+*/
+export const getDiseaseDietPlan = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { disease_or_symptoms } = req.body;
+
+    const patientContextResult = await buildPatientContextByUserId(userId);
+    const context = (patientContextResult.success && patientContextResult.context) ? patientContextResult.context : {};
+    const patient = context.patient || {};
+    const vitals = Array.isArray(context.healthMetrics) ? (context.healthMetrics[0] || {}) : (context.healthMetrics || {});
+
+    const aiRes = await generateDiseaseDietPlan({
+      diseaseOrSymptoms: disease_or_symptoms || patient.chronic_conditions || "General Wellness & Immunity",
+      patient,
+      vitals,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: aiRes.dietPlan,
+    });
+  } catch (error) {
+    console.error("Diet plan error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to generate food diet plan",
+      error: error.message,
+    });
+  }
+};
+
+/*
+=======================================================
+NATURAL LANGUAGE TABLET & LAB REPORT EXPLAINER (Q&A)
+POST /api/ai/tablet-explain
+=======================================================
+*/
+export const explainTabletAndReport = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { question } = req.body;
+
+    if (!question || !question.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Question is required",
+      });
+    }
+
+    const patientContextResult = await buildPatientContextByUserId(userId);
+    const context = patientContextResult.success ? patientContextResult.context : { patient: {}, prescriptions: [], labReports: [], medicalRecords: [] };
+
+    const aiRes = await explainTabletAndReportNLP({
+      question: question.trim(),
+      prescriptions: context.prescriptions,
+      labReports: context.labReports,
+      medicalRecords: context.medicalRecords,
+      patient: context.patient,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: aiRes.data,
+    });
+  } catch (error) {
+    console.error("Tablet explainer error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to explain tablet or lab report",
+      error: error.message,
+    });
+  }
+};
+
+/*
+=======================================================
+POST-MEDICATION EMPATHETIC RECOVERY CHECK-IN
+POST /api/ai/recovery-checkin
+=======================================================
+*/
+export const getRecoveryCheckIn = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { prescription_id } = req.body;
+
+    const patientRes = await query(`SELECT p.*, u.full_name as patient_name FROM patients p JOIN users u ON p.user_id = u.id WHERE p.user_id = $1`, [userId]);
+    const patient = patientRes.rows[0] || { patient_name: "Patient" };
+
+    // Get completed or latest prescription
+    let prescription = null;
+    let doctorName = "your doctor";
+
+    if (prescription_id) {
+      const rxRes = await query(`SELECT * FROM prescriptions WHERE id = $1`, [prescription_id]);
+      prescription = rxRes.rows[0];
+    } else {
+      const rxRes = await query(`SELECT pr.*, u.full_name as doctor_name FROM prescriptions pr LEFT JOIN doctors d ON pr.doctor_id = d.id LEFT JOIN users u ON d.user_id = u.id WHERE pr.patient_id = $1 ORDER BY pr.created_at DESC LIMIT 1`, [patient.id]);
+      if (rxRes.rows.length > 0) {
+        prescription = rxRes.rows[0];
+        doctorName = rxRes.rows[0].doctor_name || "Dr. Vikram Patel";
+      }
+    }
+
+    const aiRes = await generatePostTreatmentCheckIn({
+      completedPrescription: prescription || { medicine_name: "Course Medications", duration: "Course" },
+      doctorName,
+      patientName: patient.patient_name,
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: aiRes.checkIn,
+      prescription,
+    });
+  } catch (error) {
+    console.error("Recovery checkin error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to generate recovery check-in",
+      error: error.message,
+    });
+  }
 };

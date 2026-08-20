@@ -21,6 +21,8 @@ import {
   Phone,
   Mail,
   HeartPulse,
+  Mic,
+  Sparkles,
 } from "lucide-react";
 
 import API_BASE_URL from "../../config/api";
@@ -678,6 +680,69 @@ function DoctorDashboard() {
             <div className="doc-metric-label">Completed Sessions</div>
           </div>
         </div>
+      </div>
+
+      {/* AMBIENT CLINICAL VOICE SCRIBE BANNER */}
+      <div
+        style={{
+          background: "#f5f3ff",
+          border: "1px solid #ddd6fe",
+          borderRadius: "16px",
+          padding: "20px 24px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "16px",
+          marginBottom: "28px",
+          boxShadow: "0 2px 10px rgba(124, 58, 237, 0.05)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div
+            style={{
+              width: "50px",
+              height: "50px",
+              borderRadius: "14px",
+              background: "#ede9fe",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <Mic size={26} color="#7c3aed" />
+          </div>
+          <div>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#ede9fe", color: "#6d28d9", padding: "2px 8px", borderRadius: "12px", fontSize: "11px", fontWeight: "800", marginBottom: "4px" }}>
+              <Sparkles size={12} />
+              NEW: REAL-TIME AMBIENT SCRIBE
+            </div>
+            <div style={{ fontSize: "17px", fontWeight: "800", color: "#1e1b4b" }}>Live Doctor-Patient Consultation Voice Scribe</div>
+            <div style={{ fontSize: "13px", color: "#64748b", marginTop: "2px" }}>Auto-convert spoken dialogue into structured SOAP clinical notes and auto-sync prescriptions.</div>
+          </div>
+        </div>
+
+        <Link
+          to="/doctor-voice-scribe"
+          style={{
+            background: "#7c3aed",
+            color: "white",
+            textDecoration: "none",
+            padding: "12px 22px",
+            borderRadius: "12px",
+            fontWeight: "700",
+            fontSize: "14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            boxShadow: "0 4px 14px rgba(124, 58, 237, 0.25)",
+          }}
+        >
+          <Mic size={16} />
+          Launch Live Scribe
+          <ArrowRight size={16} />
+        </Link>
       </div>
 
       {/* MAIN TWO-COLUMN LAYOUT */}

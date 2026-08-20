@@ -29,6 +29,9 @@ import recommendationRoutes from "./routes/recommendationRoutes.js";
 
 import aiRoutes from "./routes/aiRoutes.js";
 import aiRecommendationRoutes from "./routes/aiRecommendationRoutes.js";
+import aiVoiceScribeRoutes from "./routes/aiVoiceScribeRoutes.js";
+import emergencyRoutes from "./routes/emergencyRoutes.js";
+import pharmacyRoutes from "./routes/pharmacyRoutes.js";
 
 // ============================================================
 // APP CONFIGURATION
@@ -244,6 +247,21 @@ app.use(
 app.use(
   "/api/ai",
   aiRoutes
+);
+
+app.use(
+  "/api/ai",
+  aiVoiceScribeRoutes
+);
+
+app.use(
+  "/api/emergency",
+  emergencyRoutes
+);
+
+app.use(
+  "/api/pharmacy",
+  pharmacyRoutes
 );
 
 app.use(

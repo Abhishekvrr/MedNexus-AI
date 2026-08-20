@@ -53,7 +53,7 @@ const allowedOrigins = [
 
 // Production frontend URL(s)
 // Example:
-// FRONTEND_URL=https://mednexus-ai.vercel.app
+// FRONTEND_URL=https://mednexus-ai.vercel.app,https://mycustomdomain.com
 if (process.env.FRONTEND_URL) {
   const productionOrigins = process.env.FRONTEND_URL
     .split(",")
@@ -66,13 +66,19 @@ if (process.env.FRONTEND_URL) {
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin
-      // such as Postman/server-to-server requests.
+      // Allow requests with no origin (e.g. Postman, mobile apps, curl, server-to-server)
       if (!origin) {
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin)) {
+      // Check if origin matches allowed list, wildcard '*', or any Vercel domain (*.vercel.app)
+      const isAllowed =
+        allowedOrigins.includes("*") ||
+        allowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app") ||
+        /^https:\/\/mednexus.*\.vercel\.app$/.test(origin);
+
+      if (isAllowed) {
         return callback(null, true);
       }
 

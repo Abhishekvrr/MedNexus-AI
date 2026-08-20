@@ -14,6 +14,7 @@
     "axios": "^1.19.0",
     "framer-motion": "^13.0.0",
     "lucide-react": "^1.30.0",
+    "mednexus-ai": "file:..",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-hot-toast": "^2.6.0",

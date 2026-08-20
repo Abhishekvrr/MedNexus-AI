@@ -22,7 +22,7 @@ const generateToken = (user) => {
       email: user.email,
       role: user.role,
     },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || "mednexus_production_jwt_secret_key_2026",
     {
       expiresIn: "7d",
     }

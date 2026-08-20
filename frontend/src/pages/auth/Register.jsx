@@ -75,9 +75,15 @@ function Register() {
         }),
       });
 
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = {};
+      }
+
       if (!res.ok || !data.success) {
-        throw new Error(data.message || "Failed to send verification email");
+        throw new Error(data.message || `Server error (${res.status}). Please verify database connection.`);
       }
 
       setSuccessMsg("Verification code sent to your email!");
@@ -87,7 +93,11 @@ function Register() {
       setStep("otp");
       setResendCountdown(60);
     } catch (err) {
-      setError(err.message || "Unable to send verification code. Please check your email.");
+      if (err.name === "TypeError" && (err.message.includes("fetch") || err.message.includes("NetworkError"))) {
+        setError("Unable to reach backend API. Make sure DATABASE_URL is set in Vercel Environment Variables.");
+      } else {
+        setError(err.message || "Unable to send verification code. Please check your email.");
+      }
     } finally {
       setLoading(false);
     }
@@ -115,7 +125,13 @@ function Register() {
         }),
       });
 
-      const data = await res.json();
+      let data = {};
+      try {
+        data = await res.json();
+      } catch {
+        data = {};
+      }
+
       if (!res.ok || !data.success) {
         throw new Error(data.message || "Invalid or expired verification code.");
       }

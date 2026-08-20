@@ -109,9 +109,15 @@ function Login() {
         body: JSON.stringify({ email: email.trim() }),
       });
 
-      const data = await response.json();
+      let data = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
       if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to send 2FA login code.");
+        throw new Error(data.message || `Server error (${response.status}). Please verify database connection.`);
       }
 
       setSuccessMsg("6-digit login verification code sent to your email!");
@@ -121,7 +127,11 @@ function Login() {
       setOtpStep("verify");
       setResendCountdown(60);
     } catch (err) {
-      setError(err.message || "Unable to send login OTP.");
+      if (err.name === "TypeError" && (err.message.includes("fetch") || err.message.includes("NetworkError"))) {
+        setError("Unable to reach backend API. Make sure DATABASE_URL is set in Vercel Environment Variables.");
+      } else {
+        setError(err.message || "Unable to send login OTP.");
+      }
     } finally {
       setLoading(false);
     }
@@ -150,7 +160,13 @@ function Login() {
         }),
       });
 
-      const data = await response.json();
+      let data = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = {};
+      }
+
       if (!response.ok || !data.success || !data.token) {
         throw new Error(data.message || "Invalid or expired OTP code.");
       }

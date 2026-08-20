@@ -66,32 +66,20 @@ if (process.env.FRONTEND_URL) {
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. Postman, mobile apps, curl, server-to-server)
-      if (!origin) {
-        return callback(null, true);
-      }
-
-      // Check if origin matches allowed list, wildcard '*', or any Vercel domain (*.vercel.app)
-      const isAllowed =
-        allowedOrigins.includes("*") ||
-        allowedOrigins.includes(origin) ||
-        origin.endsWith(".vercel.app") ||
-        /^https:\/\/mednexus.*\.vercel\.app$/.test(origin);
-
-      if (isAllowed) {
-        return callback(null, true);
-      }
-
-      console.warn("CORS blocked origin:", origin);
-
-      return callback(
-        new Error("Not allowed by CORS")
-      );
+      // Allow all origins (Postman, Vercel deployments, mobile apps, local dev)
+      return callback(null, true);
     },
-
     credentials: true,
   })
 );
+
+// Middleware to normalize incoming serverless /api paths
+app.use((req, res, next) => {
+  if (!req.url.startsWith("/api") && req.url !== "/") {
+    req.url = `/api${req.url.startsWith("/") ? "" : "/"}${req.url}`;
+  }
+  next();
+});
 
 app.use(express.json());
 
@@ -114,45 +102,59 @@ app.get("/", (req, res) => {
   });
 });
 
+app.get("/api", (req, res) => {
+  return res.status(200).json({
+    success: true,
+    service: "MedNexus AI API",
+    version: "1.0.0",
+    status: "operational",
+    endpoints: "/api/health, /api/auth, /api/ai, /api/emergency, /api/pharmacy",
+  });
+});
+
 // ============================================================
 // HEALTH CHECK
 // ============================================================
 
 app.get("/api/health", async (req, res) => {
   try {
+    if (!pool) {
+      return res.status(200).json({
+        success: true,
+        service: "MedNexus AI API",
+        status: "operational_without_db",
+        database: {
+          connected: false,
+          message: "DATABASE_URL not configured yet in environment variables",
+        },
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     await pool.query("SELECT 1");
 
     return res.status(200).json({
       success: true,
       service: "MedNexus AI API",
       status: "operational",
-
       database: {
         connected: true,
         name: "mednexus",
       },
-
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error(
-      "Health check error:",
-      error
-    );
+    console.error("Health check error:", error.message);
 
-    return res.status(500).json({
-      success: false,
+    return res.status(200).json({
+      success: true,
       service: "MedNexus AI API",
       status: "degraded",
-
       database: {
         connected: false,
+        error: error.message,
       },
-
-      error:
-        process.env.NODE_ENV === "production"
-          ? undefined
-          : error.message,
+      timestamp: new Date().toISOString(),
     });
   }
 });

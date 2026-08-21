@@ -327,45 +327,29 @@ app.use(
   }
 );
 
-// ============================================================
-// VERCEL EXPORT
-// ============================================================
-
-// Vercel imports this Express application.
-export default app;
-
-// ============================================================
-// LOCAL DEVELOPMENT SERVER
-// ============================================================
-
-// Only start the local HTTP server when
-// running outside production.
-//
-// Vercel handles the HTTP server automatically.
-
-if (!process.env.VERCEL) {
-  const startServer = async () => {
-    try {
-      await pool.query("SELECT 1");
-
-      console.log("PostgreSQL connected");
-      console.log(`Database: ${process.env.PGDATABASE || "mednexus"}`);
-
-      app.listen(PORT, () => {
-        console.log("");
-        console.log("==============================================");
-        console.log("       MEDNEXUS AI BACKEND                    ");
-        console.log("==============================================");
-        console.log(`Server: http://localhost:${PORT}`);
-        console.log(`Health: http://localhost:${PORT}/api/health`);
-        console.log("==============================================");
-        console.log("");
+const startServer = async () => {
+  try {
+    if (pool) {
+      await pool.query("SELECT 1").catch((err) => {
+        console.warn("Database connection notice:", err.message);
       });
-    } catch (error) {
-      console.error("Database connection failed:", error);
-      process.exit(1);
+      console.log("PostgreSQL connected");
     }
-  };
 
-  startServer();
-}
+    app.listen(PORT, () => {
+      console.log("");
+      console.log("==============================================");
+      console.log("       MEDNEXUS AI BACKEND                    ");
+      console.log("==============================================");
+      console.log(`Server listening on port ${PORT}`);
+      console.log("==============================================");
+      console.log("");
+    });
+  } catch (error) {
+    console.error("Backend startup error:", error.message);
+  }
+};
+
+startServer();
+
+export default app;

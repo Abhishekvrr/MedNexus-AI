@@ -178,11 +178,11 @@ export const sendOTPEmail = async (email, otp, purpose = "registration") => {
     }
   }
 
-  // Simulated delivery for development/hackathon demo
+  // Simulated delivery for development/demo environments without SMTP
   return {
     success: true,
     email: normalizedEmail,
     deliveredVia: "simulated",
-    previewOtp: isDev ? otp : undefined,
+    previewOtp: otp,
   };
 };
